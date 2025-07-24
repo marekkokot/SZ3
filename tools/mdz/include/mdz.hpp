@@ -161,9 +161,11 @@ float *MT(Config conf, size_t ts, T *data, size_t &compressed_size, bool decom, 
     auto sz = make_sz_timebased<T, N>(conf, ts0);
 
     Timer timer(true);
-    compressed_size = conf.num * sizeof(T);
+    const auto mkokot_overhead = 1ull << 18;
+    compressed_size = conf.num * sizeof(T) + mkokot_overhead;
+
     auto compressed = static_cast<uchar *>(malloc(compressed_size));
-    sz->compress(conf, data, compressed, compressed_size);
+    compressed_size = sz->compress(conf, data, compressed, compressed_size); //mkokot_fix: keep the compressed size to have compression ratio ok
     total_compress_time += timer.stop("Compression");
     if (!decom) {
         free(compressed);
@@ -454,9 +456,13 @@ inline typename std::enable_if<N == 1 || N == 2, size_t>::type MDZ_Compress(Conf
     }
     if (lossless_first_frame) {
         auto zstd = SZ3::Lossless_zstd();
+        const auto mkokot_overhead = 1ull << 18;
         size_t inSize = conf.dims[1] * sizeof(T);
-        uchar *buffer = new uchar[inSize];
-        auto cmpSize = zstd.compress(reinterpret_cast<uchar *>(data_ts0.data()), inSize, buffer, inSize);
+        size_t outSize = conf.dims[1] * sizeof(T) + mkokot_overhead;
+        //uchar *buffer = new uchar[inSize];
+        uchar *buffer = new uchar[outSize];
+        //auto cmpSize = zstd.compress(reinterpret_cast<uchar *>(data_ts0.data()), inSize, buffer, inSize);
+        auto cmpSize = zstd.compress(reinterpret_cast<uchar *>(data_ts0.data()), inSize, buffer, outSize);
         delete[] buffer;
         //        printf("outsize %lu\n", cmpSize);
         total_compressed_size += cmpSize;

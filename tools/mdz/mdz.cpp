@@ -15,10 +15,11 @@ int main(int argc, char **argv) {
     }
 
     int dim = atoi(argv[2] + 1);
+    printf("dim: %d", dim);
     if (dim > 3) {
         usage();
     }
-    assert(1 <= dim && dim <= 2);
+    //assert(1 <= dim && dim <= 2); //mkokot_fix: I think this assert does not make sense
     int argp = 3;
     std::vector<size_t> dims(dim);
     for (int i = 0; i < dim; i++) {
